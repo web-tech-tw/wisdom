@@ -1,18 +1,10 @@
-# App config files
-keypair_*
-.env
-
 # Finder config file
 .DS_Store
-
-# OpenAPI exported file
-openapi_exported.json
 
 # Directories
 .nyc_output
 coverage
 node_modules
-ssl_keys
 dist
 
 # Log files
@@ -32,3 +24,9 @@ pnpm-debug.log*
 
 # Lock file
 package-lock.json
+
+# Environment variables & secrets
+.env
+.env.local
+.env.*.local
+!.env.sample
