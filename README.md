@@ -1,82 +1,136 @@
-# Template RECV
+# Wisdom (智慧)
 
-[網頁客戶端](https://github.com/web-tech-tw/template.inte) | 伺服器端
+[正體中文](README.zh-TW.md) | English
 
-一個小型卻強大的微服務框架。 A tiny but powerful microservice framework.
+> **The engineering knowledge extraction pipeline**  
+> From Web-Tech-TW  
+> Meticulously crafted — a technical chat extraction and structured knowledge pipeline powered by open-source AI
 
-本系統為本組織的通用伺服器端範本，為敏捷開發而生。
+Wisdom is the data engineering and knowledge extraction pipeline of the Nymph ecosystem, operated and maintained by the Taiwan Web Technology Promotion Organization (Web Tech TW). It specializes in parsing, denoising, disentangling, and summarizing technical community discussions into structured knowledge documents and architecture decision records, continuously feeding the AI consultant retrieval system.
 
-本系統提供了一個簡單的架構，讓開發者可以快速開發出一個微服務。
+---
 
-本系統架構預設為 **單機模式** 設計。若有需求可自行擴充修改為 **分散式模式**。
+## Core Architecture & Workflow
 
-## 系統架構
+Wisdom processes raw chat streams through a four-stage pipeline:
 
-本系統採用 node.js 打造，使用 express.js 作為基礎框架，並擴充了許多功能。
-
-推薦運行於 `node.js 20` 以上版本。自帶 docker 範本，可快速部署。
-
-- 基於 express.js 擴充的微服務框架，可相容 express.js 的所有功能及生態系統。
-- 採用 commonjs 模組系統，可相容大部分 npm 套件及快速引用模組。
-- 內建 node-cache 作為快取系統，可快速存取資料。
-- 內建 mongoose 作為資料庫系統，可快速存取資料庫。
-- 內建 jsonwebtoken 作為授權系統，可快速授權。
-- 內建 mocha 作為自動化測試系統，可快速進行自動化測試。
-- 內建 nodemon 作為開發除錯系統，可快速進行開發除錯。
-- 內建 dotenv 作為環境變數系統，可快速設定環境變數。
-- 內建 cors 作為跨來源資源共用系統，可快速設定跨來源資源共用。
-- 內建 swagger 作為 API 文件系統，可快速產生 API 文件。
-- 自帶 GitHub Actions 範本，可快速進行自動化測試、組建容器、部署容器等功能。
-- 自帶 VScode DevContainer 範本，可快速進行開發、測試等功能。
-- 具有快速驗證、快速授權、快速存取資料庫、快速存取快取等功能。
-- 具有快速開發、快速測試、快速部署等功能。
-- 高擴充性，可自行擴充功能。
-
-## 系統設定
-
-### 安裝相依套件
-
-本專案使用 Node.js 作為開發環境，請先安裝 Node.js。
-
-該指令會安裝專案所需的相依套件。
-
-```sh
-npm install
+```mermaid
+flowchart TD
+    RawDocs[("Source DB: Raw Messages")] --> Task1["1. Extractor & Denoise<br/>(Filter noise, system events, merge contiguous blocks)"]
+    Task1 --> Task2["2. Disentangle Threads<br/>(Time-gap & participant sliding window segmentation)"]
+    Task2 --> Task3["3. LLM Summarization<br/>(Strict noise gate + Structured JSON extraction)"]
+    Task3 --> Task4["4. Knowledge Loader & Checkpoint<br/>(Upsert target DB + Update checkpoint SSOT)"]
+    Task4 --> TargetDB[("Target DB: Knowledge Collection")]
 ```
 
-### 自動化測試
+1. **Extraction & Denoising (`tasks/extractor.ts`)**:
+   * Pre-indexes a global author registry from historical system events.
+   * Strips out casual banter, bot triggers, sticker notifications, and system noise.
+   * Merges contiguous messages from the same author within tight time windows.
+2. **Thread Disentanglement (`tasks/disentangle.ts`)**:
+   * Segments interleaved, multi-topic group discussions into cohesive technical discussion threads based on temporal clustering and participant overlap.
+3. **LLM Technical Summarization (`tasks/summarizer.ts`)**:
+   * Applies a strict `hasTechnicalKnowledge` evaluation gate.
+   * Leverages structured outputs (`json_schema`) to extract technical category, concise topic, problem background, evaluated attempts, consensus conclusion, action items, code snippets, and tags.
+4. **Knowledge Loading & Checkpoints (`tasks/loader.ts`)**:
+   * Upserts formatted Markdown documents into the target MongoDB knowledge collection.
+   * Maintains persistent date-level processing checkpoints directly in the database as the Single Source of Truth (SSOT), supporting seamless resumption.
 
-本專案採用 Mocha 作為自動化測試框架。
+---
 
-該指令會執行所有測試案例。
+## Quick Start
 
-```sh
-npm run test
+### 1. Prerequisites
+
+* [Bun](https://bun.sh/) (>= 1.2)
+* Target MongoDB instance (storing extracted knowledge and checkpoints)
+* Source MongoDB instance (containing raw chat message archives)
+* An OpenAI-compatible LLM endpoint (e.g. Ollama, vLLM, or compatible gateway)
+
+### 2. Installation
+
+```bash
+bun install
 ```
 
-### 開發除錯模式
+### 3. Environment Configuration
 
-本專案採用 Nodemon 作為開發除錯工具。
+Copy `.env.sample` to `.env` and fill in your connection details:
 
-該指令會啟動伺服器，並在程式碼變更時自動重啟伺服器。
-
-```sh
-npm run dev
+```bash
+cp .env.sample .env
 ```
 
-### 正式產品模式
+| Variable | Description | Default / Example |
+| :--- | :--- | :--- |
+| `MONGODB_URI` | Connection URI for the target knowledge database | `mongodb://localhost:27017/nymph` |
+| `SOURCE_MONGODB_URI` | Connection URI for the raw chat messages database | `mongodb+srv://.../openchat` |
+| `SOURCE_MONGODB_DB_NAME` | Database name of the source archive | `openchat` |
+| `SOURCE_MONGODB_COLLECTION`| Collection name of raw chat messages | `messages` |
+| `ETL_OPENAI_BASE_URL` | Base URL of the OpenAI-compatible LLM endpoint | `https://integrate.api.nvidia.com/v1` |
+| `ETL_OPENAI_API_KEY` | API key for the LLM endpoint | `your_etl_openai_api_key` |
+| `ETL_OPENAI_MODEL` | Model identifier for extraction & summarization | `openai/gpt-oss-20b` |
+| `ETL_CONCURRENCY` | Maximum concurrent LLM requests during batching | `3` |
 
-該指令會啟動伺服器。
+---
 
-```sh
-npm start
+## CLI Usage
+
+Wisdom provides a CLI interface with built-in checkpoint resumption and flexible filters:
+
+### Run Full Production Pipeline
+Resumes processing from the last recorded checkpoint and writes extracted knowledge into the target database:
+
+```bash
+bun run etl
 ```
 
-## 開放原始碼授權
+### Dry Run (Preview Mode)
+Simulates extraction and prints preview Markdown knowledge slices to stdout without modifying target database records:
 
-本專案採用 MIT 開放原始碼授權。
+```bash
+bun run etl:dry-run
+```
 
-詳細可參閱 [LICENSE](LICENSE) 檔案。
+### Advanced Options
+
+* **Process limited days**: Process only the earliest N unprocessed days:
+  ```bash
+  bun run etl --days=7
+  ```
+* **Filter by specific date or month**:
+  ```bash
+  bun run etl --date="2026.10"
+  ```
+* **Override concurrency**:
+  ```bash
+  bun run etl --concurrency=5
+  ```
+* **Fresh start (ignore checkpoints)**:
+  ```bash
+  bun run etl --fresh
+  ```
+
+---
+
+## Code Quality & Testing
+
+```bash
+# Run ESLint check
+bun run lint
+
+# Automatically fix linting issues
+bun run lint:fix
+
+# Run tests
+bun test
+```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
