@@ -1,7 +1,7 @@
 {
   "name": "wisdom",
   "version": "1.0.0",
-  "description": "The engineering knowledge extraction pipeline powered by opensource.",
+  "description": "Technical knowledge extraction pipeline.",
   "author": "Taiwan Web Technology Promotion Organization",
   "homepage": "https://web-tech.tw",
   "license": "MIT",

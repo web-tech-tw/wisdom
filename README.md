@@ -2,7 +2,7 @@
 
 [正體中文](README.zh-TW.md) | English
 
-> **The engineering knowledge extraction pipeline**  
+> **Technical knowledge extraction pipeline**  
 > From Web-Tech-TW  
 > Meticulously crafted — a technical chat extraction and structured knowledge pipeline powered by open-source AI
 
