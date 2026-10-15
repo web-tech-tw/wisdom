@@ -1,19 +1,14 @@
-FROM node:20-alpine
+FROM oven/bun:alpine
 
-ENV RUNTIME_ENV container
-
-RUN adduser -u 3000 -D recv
-
-RUN mkdir -p /.npm /workplace
-WORKDIR /workplace
-ADD . /workplace
-
-RUN chown -R \
-    3000:3000 \
-    /.npm /workplace
+WORKDIR /app
+RUN chown 3000:3000 /app
 
 USER 3000
-RUN npm install
+
+COPY --chown=3000:3000 package.json ./
+RUN bun install
+
+COPY --chown=3000:3000 . .
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["bun", "start"]
