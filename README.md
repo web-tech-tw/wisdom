@@ -76,7 +76,7 @@ cp .env.sample .env
 
 ## CLI Usage
 
-Wisdom provides a CLI interface with built-in checkpoint resumption and flexible filters:
+Wisdom provides a CLI interface (powered by [Commander.js](https://github.com/tj/commander.js)) with built-in checkpoint resumption and flexible filters:
 
 ### Run Full Production Pipeline
 Resumes processing from the last recorded checkpoint and writes extracted knowledge into the target database:

@@ -224,27 +224,3 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
 
     return stats;
 }
-
-// CLI entry point
-if (import.meta.main) {
-    const args = process.argv.slice(2);
-    const isDryRun = args.includes("--dry-run");
-    const isFresh = args.includes("--fresh") || args.includes("--no-resume");
-    const isResume = !isFresh;
-    const daysArg = args.find((a) => a.startsWith("--days="))?.split("=")[1];
-    const maxDays = daysArg ? Number.parseInt(daysArg, 10) : undefined;
-    const targetDateArg = args.find((a) => a.startsWith("--date="))?.split("=")[1];
-    const concurrencyArg = args.find((a) => a.startsWith("--concurrency="))?.split("=")[1];
-    const concurrency = concurrencyArg ? Number.parseInt(concurrencyArg, 10) : undefined;
-
-    runPipeline({
-        dryRun: isDryRun,
-        resume: isResume,
-        days: maxDays,
-        targetDate: targetDateArg,
-        concurrency,
-    }).catch((err) => {
-        console.error("Pipeline Error:", err);
-        process.exit(1);
-    });
-}

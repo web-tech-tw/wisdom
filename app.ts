@@ -1,14 +1,41 @@
-import { connectDatabase } from "./src/databases/connection";
+import { Command, InvalidArgumentError } from "commander";
 import { PIPELINE_CONFIG } from "./src/pipeline/config";
+import { runPipeline } from "./src/pipeline/index";
 
-console.info("==========================================");
-console.info("Wisdom Knowledge & ETL Service");
-console.info(`- Runtime: Bun ${Bun.version}`);
-console.info(`- LLM Model: ${PIPELINE_CONFIG.llm.model}`);
-console.info(`- Concurrency: ${PIPELINE_CONFIG.llm.concurrency}`);
-console.info("==========================================");
+function parseIntegerOption(value: string): number {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isNaN(parsed)) {
+        throw new InvalidArgumentError("Expected a number.");
+    }
+    return parsed;
+}
 
-await connectDatabase();
+const app = new Command();
 
-console.info("[Wisdom] Database connected and service is ready.");
-console.info("[Wisdom] To run the ETL pipeline: bun run etl");
+app
+    .name("etl")
+    .description("Wisdom technical knowledge extraction pipeline")
+    .version("1.0.0")
+    .option("--dry-run", "Preview mode: no writes to the target database")
+    .option("--fresh", "Ignore checkpoints and process every date again")
+    .option("--days <n>", "Process only the earliest N unprocessed dates", parseIntegerOption)
+    .option("--date <pattern>", "Filter source dates by pattern (e.g. \"2026.10\")")
+    .option(
+        "--concurrency <n>",
+        `Max concurrent LLM requests (default ${PIPELINE_CONFIG.llm.concurrency})`,
+        parseIntegerOption,
+    )
+    .action(async (options) => {
+        await runPipeline({
+            dryRun: options.dryRun ?? false,
+            resume: !options.fresh,
+            days: options.days,
+            targetDate: options.date,
+            concurrency: options.concurrency,
+        });
+    });
+
+app.parseAsync().catch((err) => {
+    console.error("Pipeline Error:", err);
+    process.exit(1);
+});

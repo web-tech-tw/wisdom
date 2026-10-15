@@ -76,7 +76,7 @@ cp .env.sample .env
 
 ## 命令列工具（CLI）用法
 
-Wisdom 內建完整的 CLI 指令與斷點續跑機制：
+Wisdom 內建完整的 CLI 指令（採用 [Commander.js](https://github.com/tj/commander.js) 構建）與斷點續跑機制：
 
 ### 執行全量正式管線
 從上次成功處理的日期斷點接續執行，並將萃取完成之知識寫入目標資料庫：
