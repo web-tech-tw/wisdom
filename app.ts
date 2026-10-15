@@ -1,4 +1,5 @@
 import { Command, InvalidArgumentError } from "commander";
+import { APP_NAME, APP_DESCRIPTION } from "./src/init/const";
 import { PIPELINE_CONFIG } from "./src/pipeline/config";
 import { runPipeline } from "./src/pipeline/index";
 
@@ -13,8 +14,8 @@ function parseIntegerOption(value: string): number {
 const app = new Command();
 
 app
-    .name("etl")
-    .description("Wisdom technical knowledge extraction pipeline")
+    .name(APP_NAME)
+    .description(APP_DESCRIPTION)
     .version("1.0.0")
     .option("--dry-run", "Preview mode: no writes to the target database")
     .option("--fresh", "Ignore checkpoints and process every date again")

@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import mongoose from "mongoose";
 import { PIPELINE_CONFIG } from "./config";
+import { APP_NAME } from "../init/const";
 import type { RawMessageDoc, ExtractedKnowledge } from "./types";
 import { extractAndDenoise, buildGlobalAuthorRegistry } from "./tasks/extractor";
 import { disentangleThreads } from "./tasks/disentangle";
@@ -42,14 +43,12 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     const targetDateArg = options.targetDate;
     const concurrency = options.concurrency ?? PIPELINE_CONFIG.llm.concurrency;
 
-    console.info("==================================================");
-    console.info("Starting Technical Chat Extraction Pipeline");
-    console.info(`- Model: ${PIPELINE_CONFIG.llm.model}`);
-    console.info(`- Mode: ${isDryRun ? "DRY RUN (No target DB writes)" : "PRODUCTION (Writing to target DB)"}`);
-    console.info(`- Concurrency: ${concurrency}`);
-    if (maxDays) console.info(`- Limit: ${maxDays} days`);
-    if (targetDateArg) console.info(`- Target Date: ${targetDateArg}`);
-    console.info("==================================================\n");
+    console.info(APP_NAME, "\n====");
+    console.info(`[Model]: ${PIPELINE_CONFIG.llm.model}`);
+    console.info(`[Mode]: ${isDryRun ? "DRY RUN (No target DB writes)" : "PRODUCTION (Writing to target DB)"}`);
+    console.info(`[Concurrency]: ${concurrency}`);
+    if (maxDays) console.info(`[Limit]: ${maxDays} days`);
+    if (targetDateArg) console.info(`[Target Date]: ${targetDateArg}`);
 
     // 1. Connect to Target Database first (for Checkpoint SSOT and Knowledge Storage)
     if (mongoose.connection.readyState !== 1) {
