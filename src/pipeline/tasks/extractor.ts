@@ -9,6 +9,7 @@ import type {
 const SYSTEM_SUFFIXES: Array<{ suffix: string; type: MessageType }> = [
     { suffix: "加入聊天", type: "join" },
     { suffix: "退出聊天", type: "leave" },
+    { suffix: "離開聊天", type: "leave" },
     { suffix: "已收回訊息", type: "recall" },
     { suffix: "您已收回訊息", type: "recall" },
 ];
@@ -61,6 +62,17 @@ export function collectKnownAuthors(
         }
         if (isSystem) continue;
 
+        // New-format lines: the author is the segment before the first TAB
+        const tabIdx = trimmed.indexOf("\t");
+        if (tabIdx > 0) {
+            const candidate = trimmed.slice(0, tabIdx).trim();
+            if (candidate) {
+                freq.set(candidate, (freq.get(candidate) ?? 0) + 1);
+            }
+            continue;
+        }
+
+        // Old-format lines: space-prefix frequency analysis
         const tokens = trimmed.split(" ");
         for (let i = 1; i <= Math.min(maxTokens, tokens.length); i++) {
             if (i < tokens.length) {
@@ -88,6 +100,17 @@ export function matchAuthor(
     raw: string,
     knownAuthors: Set<string>,
 ): { author: string; content: string; confident: boolean } {
+    // New-format lines separate the author with an unambiguous TAB
+    const tabIdx = raw.indexOf("\t");
+    if (tabIdx > 0) {
+        return {
+            author: raw.slice(0, tabIdx).trim(),
+            content: raw.slice(tabIdx + 1).trim(),
+            confident: true,
+        };
+    }
+
+    // Old-format lines: longest-prefix match on known authors
     const sorted = [...knownAuthors].sort((a, b) => b.length - a.length);
 
     for (const author of sorted) {
@@ -122,20 +145,22 @@ export function parseRawMessage(
     const raw = doc.content.trim();
     const timestampMs = parseTimestampMs(doc.date, doc.time);
 
-    // 1. Check system event suffixes
-    for (const { suffix, type } of SYSTEM_SUFFIXES) {
-        if (raw.endsWith(suffix)) {
-            const author = raw.slice(0, raw.length - suffix.length).trim();
-            return {
-                id: doc._id,
-                date: doc.date,
-                time: doc.time,
-                timestampMs,
-                author: author || "System",
-                content: suffix,
-                type,
-                authorConfident: knownAuthors.has(author),
-            };
+    // 1. Check system event suffixes (system event lines never carry the author TAB)
+    if (!raw.includes("\t")) {
+        for (const { suffix, type } of SYSTEM_SUFFIXES) {
+            if (raw.endsWith(suffix)) {
+                const author = raw.slice(0, raw.length - suffix.length).trim();
+                return {
+                    id: doc._id,
+                    date: doc.date,
+                    time: doc.time,
+                    timestampMs,
+                    author: author || "System",
+                    content: suffix,
+                    type,
+                    authorConfident: knownAuthors.has(author),
+                };
+            }
         }
     }
 
@@ -235,7 +260,7 @@ export async function buildGlobalAuthorRegistry(
 ): Promise<Set<string>> {
     const systemDocs = await collection
         .find(
-            { content: { $regex: "(加入聊天|退出聊天|已收回訊息|您已收回訊息)$" } },
+            { content: { $regex: `(${SYSTEM_SUFFIXES.map((s) => s.suffix).join("|")})$` } },
             { projection: { content: 1 } },
         )
         .toArray();
