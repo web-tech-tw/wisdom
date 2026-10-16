@@ -3,6 +3,11 @@ export interface RawMessageDoc {
     date: string;
     time: string;
     content: string;
+    via?: {
+        channelId: string;
+        uploaderId: string;
+        transactionId: string;
+    };
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -59,4 +64,5 @@ export interface ExtractedKnowledge {
     };
     participants: string[];
     rawMessageCount: number;
+    sourceChannelId?: string;
 }

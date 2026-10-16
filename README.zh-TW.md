@@ -66,7 +66,7 @@ cp .env.sample .env
 | `MONGODB_URI` | 目標知識庫 MongoDB 連線位址 | `mongodb://localhost:27017/nymph` |
 | `SOURCE_MONGODB_URI` | 來源聊天紀錄 MongoDB 連線位址 | `mongodb+srv://.../openchat` |
 | `SOURCE_MONGODB_DB_NAME` | 來源資料庫名稱 | `openchat` |
-| `SOURCE_MONGODB_COLLECTION`| 來源訊息集合名稱 | `messages` |
+| `SOURCE_MONGODB_COLLECTIONS` | 來源訊息集合名稱列表，以逗號分隔（由 [Archiver](https://github.com/web-tech-tw/archiver) 寫入） | `discord_chat_archive,another_chat_archive` |
 | `ETL_OPENAI_BASE_URL` | OpenAI 相容推論端點 URL | `https://integrate.api.nvidia.com/v1` |
 | `ETL_OPENAI_API_KEY` | 推論端點 API 金鑰 | `your_etl_openai_api_key` |
 | `ETL_OPENAI_MODEL` | 萃取總結專用模型識別碼 | `openai/gpt-oss-20b` |

@@ -2,7 +2,10 @@ export const PIPELINE_CONFIG = {
     source: {
         uri: Bun.env.SOURCE_MONGODB_URI || "",
         dbName: Bun.env.SOURCE_MONGODB_DB_NAME || "openchat",
-        collectionName: Bun.env.SOURCE_MONGODB_COLLECTION || "messages",
+        collectionNames: (Bun.env.SOURCE_MONGODB_COLLECTIONS || "")
+            .split(",")
+            .map((name) => name.trim())
+            .filter(Boolean),
     },
     target: {
         uri: Bun.env.MONGODB_URI || "mongodb://localhost:27017/nymph",

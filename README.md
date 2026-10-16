@@ -66,7 +66,7 @@ cp .env.sample .env
 | `MONGODB_URI` | Connection URI for the target knowledge database | `mongodb://localhost:27017/nymph` |
 | `SOURCE_MONGODB_URI` | Connection URI for the raw chat messages database | `mongodb+srv://.../openchat` |
 | `SOURCE_MONGODB_DB_NAME` | Database name of the source archive | `openchat` |
-| `SOURCE_MONGODB_COLLECTION`| Collection name of raw chat messages | `messages` |
+| `SOURCE_MONGODB_COLLECTIONS` | Comma-separated list of archived chat message collections (written by [Archiver](https://github.com/web-tech-tw/archiver)) | `discord_chat_archive,another_chat_archive` |
 | `ETL_OPENAI_BASE_URL` | Base URL of the OpenAI-compatible LLM endpoint | `https://integrate.api.nvidia.com/v1` |
 | `ETL_OPENAI_API_KEY` | API key for the LLM endpoint | `your_etl_openai_api_key` |
 | `ETL_OPENAI_MODEL` | Model identifier for extraction & summarization | `openai/gpt-oss-20b` |

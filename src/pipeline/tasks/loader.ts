@@ -90,6 +90,8 @@ export function buildKnowledgeDocuments(
                 sourceDateRange: item.sourceDateRange,
                 participants: item.participants,
                 rawMessageCount: item.rawMessageCount,
+                sourceChannelId: item.sourceChannelId,
+                extractionStatus: "extracted",
             },
         };
     });
@@ -115,6 +117,7 @@ export async function loadKnowledgeDocuments(
 
     for (const doc of docs) {
         const filter = {
+            "metadata.sourceChannelId": doc.metadata.sourceChannelId,
             "metadata.sourceDateRange.start": doc.metadata.sourceDateRange?.start,
         };
 
