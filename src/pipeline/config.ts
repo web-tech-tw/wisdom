@@ -25,4 +25,7 @@ export const PIPELINE_CONFIG = {
         threadGapMinutes: 10,
         minThreadMessages: 2,
     },
+    notifications: {
+        discordWebhookUrl: Bun.env.DISCORD_WEBHOOK_URL || "",
+    },
 };

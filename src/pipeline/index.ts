@@ -8,6 +8,7 @@ import { disentangleThreads } from "./tasks/disentangle";
 import { summarizeThread } from "./tasks/summarizer";
 import { buildKnowledgeDocuments, loadKnowledgeDocuments, formatKnowledgeMarkdown } from "./tasks/loader";
 import { getDbCheckpoint, updateDbCheckpoint, resetDbCheckpoint } from "../databases/models/checkpoint";
+import { sendDiscordNotification, DISCORD_COLORS } from "../utils/discord";
 
 export {
     extractAndDenoise,
@@ -197,6 +198,14 @@ async function processSourceCollection(
         } catch (err) {
             console.error(`  [Pipeline Error] Failed to process date ${dateStr}:`, err);
             console.warn(`  [Checkpoint] Date ${dateStr} excluded from completed list; will be retried on next resume.`);
+            await sendDiscordNotification({
+                embeds: [{
+                    title: `日期處理失敗:${options.collectionName} ${dateStr}`,
+                    description: String((err as Error).message).slice(0, 1000),
+                    color: DISCORD_COLORS.error,
+                    timestamp: new Date().toISOString(),
+                }],
+            });
         }
     }
 
@@ -236,6 +245,20 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     await sourceClient.connect();
     const sourceDb = sourceClient.db(PIPELINE_CONFIG.source.dbName);
 
+    await sendDiscordNotification({
+        embeds: [{
+            title: "Wisdom ETL 啟動",
+            color: DISCORD_COLORS.info,
+            fields: [
+                { name: "模式", value: isDryRun ? "DRY RUN" : "PRODUCTION", inline: true },
+                { name: "模型", value: PIPELINE_CONFIG.llm.model, inline: true },
+                { name: "並行", value: String(concurrency), inline: true },
+                { name: "來源集合", value: PIPELINE_CONFIG.source.collectionNames.join(", ") },
+            ],
+            timestamp: new Date().toISOString(),
+        }],
+    });
+
     const stats: PipelineStats = {
         totalRaw: 0,
         totalMergedBlocks: 0,
@@ -266,6 +289,22 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
         stats.totalCandidateThreads += collectionStats.totalCandidateThreads;
         stats.totalExtractedItems += collectionStats.totalExtractedItems;
         stats.totalLoadedDocs += collectionStats.totalLoadedDocs;
+
+        if (collectionStats.totalRaw > 0) {
+            await sendDiscordNotification({
+                embeds: [{
+                    title: `來源集合完成:${collectionName}`,
+                    color: DISCORD_COLORS.success,
+                    fields: [
+                        { name: "原始訊息", value: String(collectionStats.totalRaw), inline: true },
+                        { name: "討論串", value: String(collectionStats.totalCandidateThreads), inline: true },
+                        { name: "萃取條目", value: String(collectionStats.totalExtractedItems), inline: true },
+                        { name: "寫入文件", value: String(collectionStats.totalLoadedDocs), inline: true },
+                    ],
+                    timestamp: new Date().toISOString(),
+                }],
+            });
+        }
     }
 
     // Cleanup connections
@@ -284,6 +323,21 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
         console.info(`- Total Documents Loaded to Target DB: ${stats.totalLoadedDocs}`);
     }
     console.info("==================================================");
+
+    await sendDiscordNotification({
+        embeds: [{
+            title: isDryRun ? "Wisdom ETL 乾跑完成" : "Wisdom ETL 完成",
+            color: DISCORD_COLORS.success,
+            fields: [
+                { name: "原始訊息", value: String(stats.totalRaw), inline: true },
+                { name: "合併區塊", value: String(stats.totalMergedBlocks), inline: true },
+                { name: "討論串", value: String(stats.totalCandidateThreads), inline: true },
+                { name: "萃取條目", value: String(stats.totalExtractedItems), inline: true },
+                { name: "寫入文件", value: String(stats.totalLoadedDocs), inline: true },
+            ],
+            timestamp: new Date().toISOString(),
+        }],
+    });
 
     return stats;
 }

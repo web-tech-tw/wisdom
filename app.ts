@@ -2,6 +2,7 @@ import { Command, InvalidArgumentError } from "commander";
 import { APP_NAME, APP_DESCRIPTION } from "./src/init/const";
 import { PIPELINE_CONFIG } from "./src/pipeline/config";
 import { runPipeline } from "./src/pipeline/index";
+import { sendDiscordNotification, DISCORD_COLORS } from "./src/utils/discord";
 
 function parseIntegerOption(value: string): number {
     const parsed = Number.parseInt(value, 10);
@@ -27,13 +28,26 @@ app
         parseIntegerOption,
     )
     .action(async (options) => {
-        await runPipeline({
-            dryRun: options.dryRun ?? false,
-            resume: !options.fresh,
-            days: options.days,
-            targetDate: options.date,
-            concurrency: options.concurrency,
-        });
+        try {
+            await runPipeline({
+                dryRun: options.dryRun ?? false,
+                resume: !options.fresh,
+                days: options.days,
+                targetDate: options.date,
+                concurrency: options.concurrency,
+            });
+        } catch (err) {
+            console.error("Pipeline Error:", err);
+            await sendDiscordNotification({
+                embeds: [{
+                    title: "Wisdom ETL 嚴重錯誤",
+                    description: String((err as Error).message).slice(0, 1000),
+                    color: DISCORD_COLORS.error,
+                    timestamp: new Date().toISOString(),
+                }],
+            });
+            process.exit(1);
+        }
     });
 
 app.parseAsync().catch((err) => {

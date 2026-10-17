@@ -71,6 +71,7 @@ cp .env.sample .env
 | `ETL_OPENAI_API_KEY` | 推論端點 API 金鑰 | `your_etl_openai_api_key` |
 | `ETL_OPENAI_MODEL` | 萃取總結專用模型識別碼 | `openai/gpt-oss-20b` |
 | `ETL_CONCURRENCY` | 批次處理時向 LLM 發起請求之最大並行度 | `3` |
+| `DISCORD_WEBHOOK_URL` | 選填的 Discord Webhook 位址，用於管線狀態通知（留空即停用） | `https://discord.com/api/webhooks/...` |
 
 ---
 

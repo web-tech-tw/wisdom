@@ -71,6 +71,7 @@ cp .env.sample .env
 | `ETL_OPENAI_API_KEY` | API key for the LLM endpoint | `your_etl_openai_api_key` |
 | `ETL_OPENAI_MODEL` | Model identifier for extraction & summarization | `openai/gpt-oss-20b` |
 | `ETL_CONCURRENCY` | Maximum concurrent LLM requests during batching | `3` |
+| `DISCORD_WEBHOOK_URL` | Optional Discord webhook URL for pipeline status notifications (empty disables) | `https://discord.com/api/webhooks/...` |
 
 ---
 
